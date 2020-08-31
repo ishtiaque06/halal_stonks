@@ -1,6 +1,8 @@
 import csv
+import argparse
 import requests
 from django.core.exceptions import ObjectDoesNotExist
+import matplotlib.pyplot as plt
 
 import manage
 
@@ -14,28 +16,56 @@ def main():
     """
     Runs various stonks research!
     """
+    parser = argparse.ArgumentParser(description="Do some stonk magic")
+    parser.add_argument(
+        "--save",
+        help="Find the stonks and save latest stonk values in db",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--dvd",
+        help="Show a bar chart of dividend per dollar",
+        action="store_true",
+    )
+    args = parser.parse_args()
+    save = args.save
+    dvd = args.dvd
 
-    with open("raw_data/stonks.csv") as csvfile:
-        stonk_reader = csv.DictReader(csvfile)
-        for row in stonk_reader:
-            received, stonk = get_stonk(row["Ticker"])
-            if received:
-                got_dividend, stonk = build_annual_dividend(stonk)
-                if got_dividend:
-                    stonk.halal_status = build_halal_status(row["Halal by Zoya"])
-                    print(f"Saving {stonk.ticker} to db")
-                    stonk.save()
+    if save:
+        with open("raw_data/stonks.csv") as csvfile:
+            stonk_reader = csv.DictReader(csvfile)
+            for row in stonk_reader:
+                received, stonk = get_stonk(row["Ticker"])
+                if received:
+                    got_dividend, stonk = build_annual_dividend(stonk)
+                    if got_dividend:
+                        stonk.halal_status = build_halal_status(row["Halal by Zoya"])
+                        print(f"Saving {stonk.ticker} to db")
+                        stonk.save()
+                    else:
+                        print(
+                            f"stonk {stonk.ticker} didn't get dividend. "
+                            "Will not save to db."
+                        )
                 else:
                     print(
-                        f"stonk {stonk.ticker} didn't get dividend. "
+                        f"Stonk {row['Ticker']} data could not be fetched from NASDAQ. "
+                        "Maybe check out what's wrong? "
                         "Will not save to db."
                     )
-            else:
-                print(
-                    f"Stonk {stonk.ticker} data could not be fetched from NASDAQ. "
-                    "Maybe check out what's wrong? "
-                    "Will not save to db."
-                )
+
+    if dvd:
+        show_dividend_per_dollar()
+
+
+def show_dividend_per_dollar():
+    stonks = Stonk.objects.filter(halal_status=Stonk.HalalStatus.HALAL).exclude(
+        annual_dividend=0
+    )
+    dividends = [stonk.annual_dividend for stonk in stonks]
+    tickers = [stonk.ticker for stonk in stonks]
+    plt.bar(tickers, dividends)
+    plt.show()
 
 
 def build_halal_status(status):
@@ -68,14 +98,14 @@ def build_annual_dividend(stonk):
     response = requests.get(
         stonk_url,
         headers=headers,
-    )
-    if response.status_code != 200:
+    ).json()
+    if int(response["status"]["rCode"]) != 200:
         print(
             "Stonk request for dividend didn't return 200. Something's "
             "probably wrong."
         )
         return False, stonk
-    dividend = remove_commas(response.json()["data"]["annualizedDividend"])
+    dividend = remove_commas(response["data"]["annualizedDividend"])
     stonk.annual_dividend = float(dividend) if dividend != "N/A" else 0
 
     return True, stonk
@@ -106,10 +136,10 @@ def get_stonk(stonk_ticker):
         "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0",
     }
-    response = requests.get(stonk_url, headers=headers)
-    if response.status_code != 200:
+    response = requests.get(stonk_url, headers=headers).json()
+    if int(response["status"]["rCode"]) != 200:
         return False, None
-    received_data = response.json()["data"]
+    received_data = response["data"]
     stonk.ticker = received_data["symbol"]
     stonk.name = received_data["companyName"]
     stonk.price = float(
