@@ -25,6 +25,8 @@ class Stonk(models.Model):
     )
     annual_dividend = models.FloatField()
     dividend_per_dollar = models.FloatField()
+    market_cap = models.PositiveBigIntegerField()
+    volume = models.PositiveBigIntegerField()
 
     @property
     def get_dividend_per_dollar(self):
