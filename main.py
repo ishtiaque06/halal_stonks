@@ -39,6 +39,9 @@ def main():
 
 
 def build_halal_status(status):
+    """
+    returns strings that comply with Stonk model's design
+    """
     if status == "Yes":
         return "Y"
     elif status == "Questionable":
@@ -72,8 +75,8 @@ def build_annual_dividend(stonk):
             "probably wrong."
         )
         return False, stonk
-    dividend = response.json()["data"]["annualizedDividend"]
-    stonk.annual_dividend = dividend if dividend != "N/A" else 0
+    dividend = remove_commas(response.json()["data"]["annualizedDividend"])
+    stonk.annual_dividend = float(dividend) if dividend != "N/A" else 0
 
     return True, stonk
 
@@ -109,11 +112,20 @@ def get_stonk(stonk_ticker):
     received_data = response.json()["data"]
     stonk.ticker = received_data["symbol"]
     stonk.name = received_data["companyName"]
-    stonk.price = float(received_data["primaryData"]["lastSalePrice"][1:])
-    stonk.volume = int(received_data["keyStats"]["Volume"]["value"])
-    stonk.market_cap = int(received_data["keyStats"]["MarketCap"]["value"])
+    stonk.price = float(
+        remove_commas(received_data["primaryData"]["lastSalePrice"][1:])
+    )
+    stonk.volume = int(remove_commas(received_data["keyStats"]["Volume"]["value"]))
+    stonk.market_cap = int(
+        remove_commas(received_data["keyStats"]["MarketCap"]["value"])
+    )
 
     return True, stonk
+
+
+def remove_commas(num_str):
+    """Remove commas from a number"""
+    return "".join(num_str.split(","))
 
 
 if __name__ == "__main__":

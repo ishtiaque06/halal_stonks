@@ -34,5 +34,11 @@ class Stonk(models.Model):
         return self.annual_dividend / self.price
 
     def save(self, *args, **kwargs):
-        self.dividend_per_dollar = self.get_dividend_per_dollar()
+        self.dividend_per_dollar = self.get_dividend_per_dollar
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.name} ({self.ticker}): \n"
+            + f"\tPrice: {self.price}; Annual Dividend: {self.annual_dividend}"
+        )
