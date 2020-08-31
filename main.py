@@ -11,6 +11,16 @@ BASE_URL = "https://api.nasdaq.com/api/quote/"
 DIVIDEND_URL = "/dividends?assetclass=stocks"
 INFO_URL = "/info?assetclass=stocks"
 
+HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Connection": "keep-alive",
+    "Host": "api.nasdaq.com",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0",
+}
+
 
 def main():
     """
@@ -59,6 +69,10 @@ def main():
 
 
 def show_dividend_per_dollar():
+    """
+    Shows a matplotlib plot for dividend value per dollar invested in
+    a halal stonk
+    """
     stonks = Stonk.objects.filter(halal_status=Stonk.HalalStatus.HALAL).exclude(
         annual_dividend=0
     )
@@ -86,18 +100,9 @@ def build_annual_dividend(stonk):
     """
     stonk_url = BASE_URL + stonk.ticker + DIVIDEND_URL
 
-    headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Connection": "keep-alive",
-        "Host": "api.nasdaq.com",
-        "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0",
-    }
     response = requests.get(
         stonk_url,
-        headers=headers,
+        headers=HEADERS,
     ).json()
     if int(response["status"]["rCode"]) != 200:
         print(
@@ -127,16 +132,7 @@ def get_stonk(stonk_ticker):
         stonk = Stonk()
     stonk_url = BASE_URL + stonk_ticker + INFO_URL
 
-    headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Connection": "keep-alive",
-        "Host": "api.nasdaq.com",
-        "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0",
-    }
-    response = requests.get(stonk_url, headers=headers).json()
+    response = requests.get(stonk_url, headers=HEADERS).json()
     if int(response["status"]["rCode"]) != 200:
         return False, None
     received_data = response["data"]
