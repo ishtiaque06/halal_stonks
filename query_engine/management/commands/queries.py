@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from orm.models import Stonk
 
 
@@ -23,7 +23,7 @@ class Command(BaseCommand):
             stonks = [Stonk.objects.get(ticker=sym.upper()) for sym in options["dvd"]]
             tickers, dividends = get_dividends_per_dollar(stonks)
 
-        for i in range(len(tickers)):
+        for i, _ in enumerate(tickers):
             self.stdout.write(self.style.SUCCESS(f"{tickers[i]}: {dividends[i]}"))
 
 
