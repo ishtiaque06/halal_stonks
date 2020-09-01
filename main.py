@@ -73,13 +73,21 @@ def show_dividend_per_dollar():
     Shows a matplotlib plot for dividend value per dollar invested in
     a halal stonk
     """
+    tickers, dividends = get_all_dividends_per_dollar()
+    plt.bar(tickers, dividends)
+    plt.show()
+
+
+def get_all_dividends_per_dollar():
+    """
+    Get a tuple of all company tickers and their dividend-per-dollar ratio
+    """
     stonks = Stonk.objects.filter(halal_status=Stonk.HalalStatus.HALAL).exclude(
         annual_dividend=0
     )
     dividends = [stonk.annual_dividend for stonk in stonks]
     tickers = [stonk.ticker for stonk in stonks]
-    plt.bar(tickers, dividends)
-    plt.show()
+    return tickers, dividends
 
 
 def build_halal_status(status):
