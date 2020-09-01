@@ -8,9 +8,7 @@ from django.conf import settings
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-INSTALLED_APPS = [
-    "orm",
-]
+INSTALLED_APPS = ["orm", "query_engine", "visualize"]
 
 
 DATABASES = {
